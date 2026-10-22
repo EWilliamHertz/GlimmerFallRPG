@@ -736,16 +736,16 @@
       "wlk_plague_contagion",
       "wlk_avatar_of_the_abyss"
     ],
-    "x": 26.381478386703943,
-    "y": 28.461710501836635,
+    "x": 27.091309795375206,
+    "y": -25.983932398315833,
     "z": 0,
-    "facingRad": 0.7050019328407049,
+    "facingRad": 2.362908234449773,
     "savedOpenWorldPos": {
       "x": 253.55402436406382,
       "y": -98.76681013639049,
       "z": 0
     },
-    "lastSavedAt": 1792673770456
+    "lastSavedAt": 1792674723651
   },
   "sunspirevanguard": {
     "name": "SunspireVanguard",
