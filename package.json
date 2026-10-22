@@ -1,0 +1,32 @@
+{
+  "name": "glimmerfall-online",
+  "version": "0.1.0",
+  "description": "Glimmerfall Online - Authoritative Tab-Target MMORPG set in the Glimmerfall TCG Universe",
+  "private": true,
+  "scripts": {
+    "build:client": "esbuild client/main.ts --bundle --outfile=client/dist/bundle.js --platform=browser --target=es2022 --define:import.meta.url=document.baseURI --sourcemap",
+    "build": "npm run build:client && tsc --noEmit",
+    "start": "npm run build:client && tsx server/index.ts",
+    "dev": "npm run build:client && tsx server/index.ts",
+    "tunnel": "tsx scripts/tunnel.ts",
+    "sync:neon": "tsx scripts/sync_from_neon.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "pg": "^8.23.1",
+    "three": "^0.186.1",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@ngrok/ngrok": "^1.7.0",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.10",
+    "@types/pg": "^8.23.1",
+    "@types/three": "^0.186.0",
+    "@types/ws": "^8.5.12",
+    "esbuild": "^0.23.0",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.3"
+  }
+}

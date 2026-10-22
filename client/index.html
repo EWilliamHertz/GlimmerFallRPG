@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Glimmerfall Online — The Living 3D World of Glimmerfall TCG</title>
+  <link rel="stylesheet" href="/styles/hud.css" />
+  <link rel="stylesheet" href="/styles/portal.css" />
+</head>
+<body>
+  <!-- Three.js 3D Third-Person Open World Canvas (Cinematic Orbit on Portal, Playable in World) -->
+  <canvas id="game-canvas" tabindex="0"></canvas>
+
+  <!-- Red Flash Vignette on Taking Damage -->
+  <div id="damage-vignette"></div>
+
+  <!-- 3D Projected Diegetic World Indicators (Floating Health Bars & Damage Numbers) -->
+  <div id="world-space-overlay"></div>
+
+  <!-- AAA Dark-Fantasy Landing Page & Game Launcher Portal -->
+  <div id="landing-portal"></div>
+
+  <!-- Minimalist High-Immersion HUD Layer (Active when inside the 3D World) -->
+  <div id="minimal-hud-layer" class="hidden">
+    <!-- Top Row: Minimal Menu Pills + Right 3D Mini-Compass & Queue Status -->
+    <div class="hud-top-row">
+      <div class="menu-pills-cluster interactive">
+        <button id="btn-open-portal" class="hud-pill-btn brand-pill" style="border-color:#fde047;color:#fde047;display:inline-flex;align-items:center;gap:6px;">
+          <img src="/glimmerfall_logo.png" alt="Logo" class="hud-btn-logo" />
+          <span>Game Portal & Lore</span>
+        </button>
+        <button id="btn-open-k" class="hud-pill-btn">📜 Abilities (K)</button>
+        <button id="btn-open-i" class="hud-pill-btn">🏰 Queue (I)</button>
+        <button id="btn-open-c" class="hud-pill-btn">🃏 Attributes & Relics (C)</button>
+        <button id="btn-open-n" class="hud-pill-btn">🌿 Talents (N)</button>
+        <button id="btn-toggle-mount" class="hud-pill-btn" style="border-color:#f97316;color:#fdba74;">🦅 Mount (M)</button>
+        <button id="btn-open-o" class="hud-pill-btn" style="border-color:#a855f7;color:#d8b4fe;">⚙️ Keybinds (O)</button>
+        <button id="btn-leave-instance" class="hud-pill-btn hidden" style="border-color:#38bdf8;color:#38bdf8;">
+          🌀 Return to Nexus
+        </button>
+      </div>
+
+      <!-- Multi-Biome Zone Discovery Announcement Banner -->
+      <div id="zone-entry-banner" class="zone-banner-wrap hidden">
+        <div class="zone-banner-content">
+          <div id="zone-banner-sub" class="zone-banner-sub">DISCOVERED REGION</div>
+          <div id="zone-banner-title" class="zone-banner-title">SOLARI SUN-DUNES</div>
+          <div id="zone-banner-desc" class="zone-banner-desc">Tier 2 Exploration Zone • Level 10–25</div>
+        </div>
+      </div>
+
+      <div class="compass-box interactive">
+        <div id="compass-heading">🧭 N (0°) • (0, 0)</div>
+        <div id="compass-zone-title">Glimmerfall Expanse</div>
+        <div id="compass-objective">Explore the 4 Faction Biomes or press [I] for Dungeons & PvP</div>
+        <div id="queue-pulse-badge" class="hidden">⏳ Queued...</div>
+      </div>
+    </div>
+
+    <!-- Top-Center Opposing Enemy Life Total & Boss Unit Frame -->
+    <div id="top-enemy-boss-frame" class="interactive hidden">
+      <div class="boss-frame-header">
+        <div class="boss-frame-left">
+          <span class="boss-skull">💀</span>
+          <span id="boss-name" class="boss-title">Opposing Enemy</span>
+          <span id="boss-level-badge" class="boss-level">Lv. 60</span>
+        </div>
+        <div id="boss-faction-tag" class="boss-faction-pill">HOSTILE</div>
+      </div>
+      <div class="boss-bar-track">
+        <div class="boss-bar-fill" id="boss-hp-fill" style="width:100%"></div>
+        <div class="boss-hp-numbers" id="boss-hp-label">85,000 / 85,000 HP (100.0%)</div>
+      </div>
+      <div id="boss-cast-bar" class="boss-cast-track hidden">
+        <div id="boss-cast-fill" class="boss-cast-fill"></div>
+        <span id="boss-cast-name" class="boss-cast-name">Casting...</span>
+      </div>
+    </div>
+
+    <!-- Secondary Tab Target Unit Frame -->
+    <div id="target-unit-frame" class="interactive hidden">
+      <div class="target-nameplate-row">
+        <span id="target-name">Target Construct</span>
+        <span id="target-level" class="target-lvl">Lv. 60</span>
+      </div>
+      <div class="slim-bar-track">
+        <div class="slim-bar-fill target-hp" id="target-hp-fill" style="width:100%"></div>
+        <div class="slim-bar-label" id="target-hp-label">0 / 0 HP</div>
+      </div>
+    </div>
+
+    <!-- Center Ready-Check Queue Pop Notification -->
+    <div id="queue-pop-banner" class="interactive hidden">
+      <h3>⚔️ YOUR INSTANCE IS READY!</h3>
+      <div id="pop-instance-title" style="font-weight:700; margin-top:2px;">The Sunspire Vaults</div>
+      <div id="pop-party-list">Party Ready</div>
+      <div class="pop-btn-row">
+        <button id="btn-accept-pop" class="btn-accept">Accept & Teleport to Instance</button>
+        <button id="btn-decline-pop" class="btn-decline">Leave Queue</button>
+      </div>
+    </div>
+
+    <!-- Modal Overlay (K, I, C, N, O) -->
+    <div id="hud-modal" class="interactive hidden">
+      <div class="modal-header">
+        <h3 id="modal-title">Window</h3>
+        <button id="modal-close-btn">✕ Close (Esc)</button>
+      </div>
+      <div id="modal-body"></div>
+    </div>
+
+    <!-- Bottom-Left Floating Moveable Combat Log -->
+    <div id="hud-combat-log" class="interactive">
+      <div class="cl-header" id="cl-header" title="Click and drag to move chat/log anywhere">
+        <div class="cl-header-left">
+          <span class="cl-drag-handle">⋮⋮</span>
+          <span class="cl-title">📜 Combat Log</span>
+        </div>
+        <div class="cl-tabs">
+          <button class="cl-tab active" data-filter="ALL">All</button>
+          <button class="cl-tab" data-filter="INCOMING">Damage Taken</button>
+          <button class="cl-tab" data-filter="OUTGOING">Damage Done</button>
+        </div>
+        <button id="btn-clear-cl" class="cl-collapse-btn" title="Clear Log" style="margin-right:2px; font-size:10px;">🗑️</button>
+        <button id="btn-toggle-cl" class="cl-collapse-btn">−</button>
+      </div>
+      <div id="cl-body" class="cl-body">
+        <div class="cl-line system">Ready for battle. Press [K] for abilities, [O] for custom keybinds.</div>
+      </div>
+    </div>
+
+    <!-- Bottom-Center Fading Vitals + Compact 6-Slot Tactical Action Cluster -->
+    <div class="hud-bottom-center">
+      <div id="relic-harvest-prompt" class="hidden"></div>
+
+      <div id="minimal-cast-bar" class="hidden">
+        <div id="minimal-cast-fill"></div>
+        <div id="minimal-cast-text">Casting...</div>
+      </div>
+
+      <!-- Slim Dynamic Fading Health & Faction Resource Bars -->
+      <div class="player-vitals-container">
+        <div id="player-faction-crest-badge" class="player-hud-faction-badge" title="Your Faction Allegiance">
+          <img id="hud-player-faction-img" src="/assets/factions/solari.png" alt="Faction Crest" />
+        </div>
+        <div id="bottom-vitals-wrap" class="interactive">
+          <div id="vital-res2-strip">SOLAR CHARGE: 0 / 100</div>
+          <div class="slim-bar-track">
+            <div class="slim-bar-fill" id="vital-hp-fill" style="width:100%"></div>
+            <div class="slim-bar-label" id="vital-hp-label">1000 / 1000 HP</div>
+          </div>
+          <div class="slim-bar-track">
+            <div class="slim-bar-fill" id="vital-res1-fill" style="width:100%"></div>
+            <div class="slim-bar-label" id="vital-res1-label">DIVINE: 1000 / 1000</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MMORPG Experience Bar (Level & Progression) -->
+      <div id="hud-xp-bar" class="interactive">
+        <div class="xp-bar-track">
+          <div class="xp-bar-fill" id="hud-xp-fill" style="width:0%"></div>
+          <div class="xp-bar-label" id="hud-xp-label">Level 1 • 0 / 300 XP (0%)</div>
+        </div>
+      </div>
+
+      <!-- Compact 6-Slot Tactical Action Cluster (LMB, RMB, Q, E, R, F) -->
+      <div class="tactical-cluster-bar interactive">
+        <div id="tactical-cluster-slots"></div>
+        <div class="mobility-hints" id="hud-mobility-hints">
+          <span><strong>M</strong>: Mount</span>
+          <span><strong>Space</strong>: Jump</span>
+          <span><strong>Shift</strong>: Dodge</span>
+          <span><strong>Tab</strong>: Target</span>
+          <span><strong>Alt</strong>: Cursor</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/dist/bundle.js"></script>
+</body>
+</html>

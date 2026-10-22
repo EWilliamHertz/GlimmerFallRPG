@@ -1,0 +1,18 @@
+{
+  "testuser": {
+    "identifier": "testuser",
+    "passwordHash": "secretpassword",
+    "heroName": "TestHero",
+    "factionId": "SOLARI",
+    "classId": "SUNFORGED_PALADIN",
+    "createdAt": 1792505133471
+  },
+  "newplayer@test.com": {
+    "identifier": "newplayer@test.com",
+    "passwordHash": "password123",
+    "heroName": "TestPaladin",
+    "factionId": "SOLARI",
+    "classId": "SUNFORGED_PALADIN",
+    "createdAt": 1792507546496
+  }
+}
