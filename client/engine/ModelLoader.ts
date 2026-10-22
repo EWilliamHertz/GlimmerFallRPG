@@ -454,6 +454,12 @@ export class ModelLoader {
       model.position.y = 1.35;
     } else if (canonicalUrl.includes('spider')) {
       model.scale.setScalar(0.92 * actorScale);
+    } else if (canonicalUrl.includes('parrot')) {
+      // Raw parrot.glb is authored ~80 wide x 100 long x 34 tall (model units). Without an explicit
+      // scale it fell into the KayKit hero branch (x1.35) and rendered ~100 yards wide, filling the screen.
+      model.scale.setScalar(0.05 * actorScale);
+      model.position.y = 1.8; // hover above the ground
+      model.rotation.y = Math.PI; // parrot.glb faces -Z
     } else if (canonicalUrl.includes('robot')) {
       model.scale.setScalar(0.65 * actorScale);
     } else if (canonicalUrl.includes('solari_boss')) {

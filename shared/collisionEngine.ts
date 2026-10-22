@@ -140,7 +140,7 @@ export class CollisionWorld {
 
       for (const side of [-1, 1]) {
         for (let seg = 1; seg <= 5; seg++) {
-          const t = seg / 5.5;
+          const t = (seg + 0.35) / 5.5;
           const cx = p.tx * t + Math.cos(perpAngle) * wallOffset * side;
           const cz = p.tz * t + Math.sin(perpAngle) * wallOffset * side;
           const cliffHeight = 16 + (seg % 3) * 6;
@@ -165,13 +165,23 @@ export class CollisionWorld {
     }
 
     // 2. Nexus Sanctuary Fortified Outer Wall Ramparts
-    // High stone castle battlements between the 4 canyon roads
-    // North Wall: (0, -33.5), length 34, width 4.5, height 12
+    // North Wall: Split into West and East curtain walls flanking central Archway Gateway (x: -5 to +5 open)
     this.addCollider({
       type: 'BOX',
-      id: 'nexus_wall_north',
+      id: 'nexus_wall_north_left',
       instanceId: inst,
       minX: -17,
+      maxX: -5,
+      minZ: -36,
+      maxZ: -31,
+      minY: 0,
+      maxY: 12,
+    });
+    this.addCollider({
+      type: 'BOX',
+      id: 'nexus_wall_north_right',
+      instanceId: inst,
+      minX: 5,
       maxX: 17,
       minZ: -36,
       maxZ: -31,
@@ -179,12 +189,23 @@ export class CollisionWorld {
       maxY: 12,
     });
 
-    // South Wall: (0, 33.5), length 34, width 4.5, height 12
+    // South Wall: Split into West and East curtain walls flanking central gateway (x: -5 to +5 open)
     this.addCollider({
       type: 'BOX',
-      id: 'nexus_wall_south',
+      id: 'nexus_wall_south_left',
       instanceId: inst,
       minX: -17,
+      maxX: -5,
+      minZ: 31,
+      maxZ: 36,
+      minY: 0,
+      maxY: 12,
+    });
+    this.addCollider({
+      type: 'BOX',
+      id: 'nexus_wall_south_right',
+      instanceId: inst,
+      minX: 5,
       maxX: 17,
       minZ: 31,
       maxZ: 36,
@@ -192,7 +213,7 @@ export class CollisionWorld {
       maxY: 12,
     });
 
-    // West Wall: (-33.5, 0), length 34, width 4.5, height 12
+    // West Wall: (-33.5, 0), length 34, width 5, height 12
     this.addCollider({
       type: 'BOX',
       id: 'nexus_wall_west',
@@ -205,7 +226,7 @@ export class CollisionWorld {
       maxY: 12,
     });
 
-    // East Wall: (33.5, 0), length 34, width 4.5, height 12
+    // East Wall: (33.5, 0), length 34, width 5, height 12
     this.addCollider({
       type: 'BOX',
       id: 'nexus_wall_east',
@@ -218,16 +239,41 @@ export class CollisionWorld {
       maxY: 12,
     });
 
+    // 8 Grand Citadel Watchtowers (solid stone cylinders)
+    const towerPositions = [
+      { x: 19, z: -33.5 },
+      { x: 33.5, z: -19 },
+      { x: 33.5, z: 19 },
+      { x: 19, z: 33.5 },
+      { x: -19, z: 33.5 },
+      { x: -33.5, z: 19 },
+      { x: -33.5, z: -19 },
+      { x: -19, z: -33.5 },
+    ];
+    for (let i = 0; i < towerPositions.length; i++) {
+      const tp = towerPositions[i];
+      this.addCollider({
+        type: 'CYLINDER',
+        id: `nexus_watchtower_${i}`,
+        instanceId: inst,
+        x: tp.x,
+        z: tp.z,
+        radius: 2.6,
+        minY: 0,
+        maxY: 16,
+      });
+    }
+
     // 3. Central Nexus Sanctuary Structures
-    // Central Spire Crystal
+    // Central Spire Crystal (elevated hovering crystal, ground is clear)
     this.addCollider({
       type: 'CYLINDER',
       id: 'nexus_central_crystal',
       instanceId: inst,
       x: 0,
       z: 0,
-      radius: 2.2,
-      minY: 0,
+      radius: 1.8,
+      minY: 3.2,
       maxY: 14,
     });
 
@@ -257,7 +303,7 @@ export class CollisionWorld {
       maxY: 6.5,
     });
 
-    // Boss Citadel Archway Pillars (0, 0, -30)
+    // Boss Citadel Archway Pillars (0, 0, -30) flanking North Road
     this.addCollider({
       type: 'CYLINDER',
       id: 'archway_left_pillar',
@@ -288,7 +334,7 @@ export class CollisionWorld {
     ];
 
     for (const b of basePositions) {
-      // Central base spire crystal
+      // Central base spire crystal (elevated hovering crystal, ground pass is clear)
       this.addCollider({
         type: 'CYLINDER',
         id: `${b.id}_base_crystal`,
@@ -296,13 +342,13 @@ export class CollisionWorld {
         x: b.x,
         z: b.z,
         radius: 1.8,
-        minY: 0,
+        minY: 2.8,
         maxY: 8,
       });
 
-      // 4 Monumental Boundary Columns around each base at radius 9.5
+      // 4 Monumental Boundary Columns cardinal to each base dais (6.7+ yards clear of diagonal road)
       for (let i = 0; i < 4; i++) {
-        const ang = (i / 4) * Math.PI * 2 + Math.PI / 4;
+        const ang = (i / 2) * Math.PI;
         const colX = b.x + Math.cos(ang) * 9.5;
         const colZ = b.z + Math.sin(ang) * 9.5;
         this.addCollider({
@@ -367,6 +413,46 @@ export class CollisionWorld {
         radius: 2.0,
         minY: 0,
         maxY: 10,
+      });
+    }
+
+    // 6. Open-World Environment Obstacles (Trees, Columns, Rocks, Crystals)
+    // Synchronized with World3D.ts, avoiding all roads and pathways
+    const isNearRoadOrSanctuary = (x: number, z: number): boolean => {
+      if (Math.hypot(x, z) < 36) return true; // Sanctuary interior
+      if (Math.abs(x) < 5.0 && z <= 0 && z >= -85) return true; // North road
+      if (Math.abs(x) < 5.0 && z >= 0 && z <= 85) return true; // South road
+      const dSolari = Math.abs(x + z) / Math.SQRT2;
+      if (dSolari < 7.0 && x > 0 && z < 0) return true;
+      const dTerra = Math.abs(x - z) / Math.SQRT2;
+      if (dTerra < 7.0 && x > 0 && z > 0) return true;
+      const dUmbri = Math.abs(x + z) / Math.SQRT2;
+      if (dUmbri < 7.0 && x < 0 && z > 0) return true;
+      const dAether = Math.abs(x - z) / Math.SQRT2;
+      if (dAether < 7.0 && x < 0 && z < 0) return true;
+      return false;
+    };
+
+    for (let i = 0; i < 160; i++) {
+      const angle = (i / 160) * Math.PI * 2 + (i % 5) * 0.17;
+      const radius = 24 + ((i * 37) % 320);
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
+      if (isNearRoadOrSanctuary(x, z)) continue;
+
+      const propType = i % 4; // 0: tree, 1: column, 2: rock, 3: crystal
+      const colRadius = propType === 0 ? 1.4 : propType === 1 ? 1.3 : propType === 2 ? 1.6 : 1.2;
+      const colHeight = propType === 0 ? 9.0 : propType === 1 ? 7.0 : propType === 2 ? 3.5 : 4.0;
+
+      this.addCollider({
+        type: 'CYLINDER',
+        id: `world_prop_${i}`,
+        instanceId: inst,
+        x,
+        z,
+        radius: colRadius,
+        minY: 0,
+        maxY: colHeight,
       });
     }
   }
@@ -495,10 +581,10 @@ export class CollisionWorld {
             totalCollided = true;
           }
         } else if (col.type === 'OBB') {
-          const cos = Math.cos(-col.rotationY);
-          const sin = Math.sin(-col.rotationY);
+          const cos = Math.cos(col.rotationY);
+          const sin = Math.sin(col.rotationY);
 
-          // Rotate player position into OBB local frame
+          // Rotate player position into OBB local frame (matching Three.js rotation)
           const rx = x - col.cx;
           const rz = z - col.cz;
           const lx = rx * cos - rz * sin;
@@ -533,11 +619,11 @@ export class CollisionWorld {
               else pushLZ = top + playerRadius;
             }
 
-            // Transform local push vector back to world space
-            const cosW = Math.cos(col.rotationY);
-            const sinW = Math.sin(col.rotationY);
-            x += pushLX * cosW - pushLZ * sinW;
-            z += pushLX * sinW + pushLZ * cosW;
+            // Transform local push vector back to world space (matching Three.js rotation)
+            const pushWX = pushLX * cos + pushLZ * sin;
+            const pushWZ = -pushLX * sin + pushLZ * cos;
+            x += pushWX;
+            z += pushWZ;
 
             passCollided = true;
             totalCollided = true;

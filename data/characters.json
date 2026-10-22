@@ -736,16 +736,16 @@
       "wlk_plague_contagion",
       "wlk_avatar_of_the_abyss"
     ],
-    "x": 58.751085821659615,
-    "y": 44.70051954433812,
+    "x": 26.381478386703943,
+    "y": 28.461710501836635,
     "z": 0,
-    "facingRad": -0.9950963267948966,
+    "facingRad": 0.7050019328407049,
     "savedOpenWorldPos": {
       "x": 253.55402436406382,
       "y": -98.76681013639049,
       "z": 0
     },
-    "lastSavedAt": 1792673345450
+    "lastSavedAt": 1792673770456
   },
   "sunspirevanguard": {
     "name": "SunspireVanguard",
@@ -968,5 +968,79 @@
     "facingRad": 0,
     "savedOpenWorldPos": null,
     "lastSavedAt": 1792511209902
+  },
+  "perfbot": {
+    "name": "PerfBot",
+    "classId": "SUNFORGED_PALADIN",
+    "level": 1,
+    "currentXp": 0,
+    "maxXp": 300,
+    "attributePointsAvailable": 5,
+    "allocatedAttributes": {
+      "stamina": 0,
+      "intellect": 0,
+      "strength": 0,
+      "agility": 0,
+      "spirit": 0
+    },
+    "abilityPointsAvailable": 1,
+    "abilityRanks": {
+      "pal_strike_of_dawn": 1,
+      "pal_aegis_of_the_sunspire": 1,
+      "pal_blinding_verdict": 1,
+      "pal_consecrated_ground": 1,
+      "pal_judgment_of_sol": 1,
+      "pal_solar_tether": 1,
+      "pal_wings_of_the_zenith": 1,
+      "pal_radiant_bulwark": 1,
+      "pal_supernova_execution": 1
+    },
+    "talents": {},
+    "talentPointsAvailable": 60,
+    "equippedRelicDeck": [
+      "card_solari_crest_of_the_sun",
+      "card_solari_sunforge_anvil",
+      "card_solari_aegis_of_the_sun"
+    ],
+    "actionBars": [
+      "pal_strike_of_dawn",
+      "pal_aegis_of_the_sunspire",
+      "pal_blinding_verdict",
+      "pal_consecrated_ground",
+      "pal_judgment_of_sol",
+      "pal_solar_tether",
+      "pal_wings_of_the_zenith",
+      "pal_radiant_bulwark",
+      "pal_supernova_execution",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "tacticalLoadout": [
+      "pal_strike_of_dawn",
+      "pal_aegis_of_the_sunspire",
+      "pal_blinding_verdict",
+      "pal_consecrated_ground",
+      "pal_judgment_of_sol",
+      "pal_supernova_execution"
+    ],
+    "x": 20.010813650991878,
+    "y": -21.896499115123216,
+    "z": 0,
+    "facingRad": -1.5707963267948966,
+    "savedOpenWorldPos": null,
+    "lastSavedAt": 1792674531360
   }
 }

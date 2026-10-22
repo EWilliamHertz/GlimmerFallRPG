@@ -51,6 +51,9 @@ class Glimmerfall3DClient {
   private sMovementYaw: number | null = null;
   private sTurnTargetYaw: number | null = null;
   private wasMovingLastTick = false;
+  // Newest un-applied WORLD_STATE JSON (applied once per frame) and when the player last moved locally.
+  private pendingWorldStateRaw: string | null = null;
+  private lastLocalInputAtMs = 0;
 
   private keysDown: Set<string> = new Set();
   private isDraggingCamera = false;
@@ -154,7 +157,15 @@ class Glimmerfall3DClient {
 
     this.ws.addEventListener('message', (ev) => {
       try {
-        const packet = JSON.parse(ev.data) as ServerPacket;
+        const raw = ev.data as string;
+        // WORLD_STATE arrives 20x/sec and is large. Don't parse every one: keep only the newest and
+        // apply it once per rendered frame (see renderLoop). Each snapshot is a full state, so skipping
+        // intermediate ones is lossless apart from sub-frame detail, and it makes a backlog impossible.
+        if (raw.startsWith('{"type":"WORLD_STATE"')) {
+          this.pendingWorldStateRaw = raw;
+          return;
+        }
+        const packet = JSON.parse(raw) as ServerPacket;
         if (packet.type === 'WELCOME') {
           this.myPlayerId = packet.playerId;
           this.serverTimeOffsetMs = packet.serverTimeMs - Date.now();
@@ -166,52 +177,13 @@ class Glimmerfall3DClient {
             });
           }
         } else if (packet.type === 'WORLD_STATE') {
-          const prevInstanceId = this.instanceInfo?.instanceId;
-          this.serverTimeOffsetMs = packet.serverTimeMs - Date.now();
-          this.instanceInfo = packet.instanceInfo;
-          this.queueStatus = packet.queueStatus;
-          this.players = packet.players;
-          this.npcs = packet.npcs;
-          this.groundZones = packet.groundZones;
-          this.relicNodes = packet.relicNodes;
-
-          this.world3D.setInstanceEnvironmentTheme(packet.instanceInfo.templateId);
-          const me = this.getMyPlayer();
-
-          if (me) {
-            const distFromPred = Math.hypot(me.x - this.localPred.x, me.y - this.localPred.z);
-            const changedInstance = prevInstanceId && prevInstanceId !== packet.instanceInfo.instanceId;
-            const hardDesyncThreshold = me.isMounted ? 95.0 : 80.0;
-
-            // Only snap on initial spawn, dungeon zone change, death respawn, or major teleport (>80yd).
-            // Zero idle drift pull to eliminate all rubberbanding on both local and ngrok connections.
-            if (!this.hasSyncedInitialPos || changedInstance || me.isDead || distFromPred > hardDesyncThreshold) {
-              this.localPred.x = me.x;
-              this.localPred.z = me.y;
-              this.localPred.heightY = me.z;
-              this.hasSyncedInitialPos = true;
-            } else if (!me.isMounted && me.z === 0) {
-              this.localPred.heightY = 0;
-            }
-          }
-
-          this.world3D.syncWorldState({
-            players: this.players,
-            npcs: this.npcs,
-            groundZones: this.groundZones,
-            relicNodes: this.relicNodes,
-            myPlayerId: this.myPlayerId,
-            myTargetId: me?.targetId ?? null,
-            isHostileToMe: (ent) => this.isHostileToMe(ent),
-          });
-
-          this.spawnVfxForNewEvents(packet.recentEvents);
-          this.hud.ingestCombatEvents(packet.recentEvents);
+          this.applyWorldState(packet);
         }
       } catch {
         // Ignore malformed packet
       }
     });
+
 
     this.ws.addEventListener('close', () => {
       setTimeout(() => this.connectWebSocket(), 1500);
@@ -957,6 +929,7 @@ class Glimmerfall3DClient {
           ? this.sMovementYaw
           : this.world3D.cameraYaw;
       const moveAngle = Math.atan2(moveX, moveZ) + refYaw;
+      this.lastLocalInputAtMs = performance.now();
       this.localPred.rotY = lerpAngle(this.localPred.rotY, moveAngle, Math.min(1, dt * 15));
 
       let baseSpeed = 16.5;
@@ -1056,6 +1029,58 @@ class Glimmerfall3DClient {
     }
 
     this.checkZoneDiscovery();
+  }
+
+  private applyWorldState(packet: Extract<ServerPacket, { type: 'WORLD_STATE' }>): void {
+    const prevInstanceId = this.instanceInfo?.instanceId;
+    this.serverTimeOffsetMs = packet.serverTimeMs - Date.now();
+    this.instanceInfo = packet.instanceInfo;
+    this.queueStatus = packet.queueStatus;
+    this.players = packet.players;
+    this.npcs = packet.npcs;
+    this.groundZones = packet.groundZones;
+    this.relicNodes = packet.relicNodes;
+
+    this.world3D.setInstanceEnvironmentTheme(packet.instanceInfo.templateId);
+    const me = this.getMyPlayer();
+
+    if (me) {
+      const distFromPred = Math.hypot(me.x - this.localPred.x, me.y - this.localPred.z);
+      const changedInstance = prevInstanceId && prevInstanceId !== packet.instanceInfo.instanceId;
+      const hardDesyncThreshold = me.isMounted ? 95.0 : 80.0;
+      // The server follows the client's reported position, so while the player has been moving
+      // locally a far-away server position is just an old snapshot, not a correction. Treating it as
+      // one is what rubberbanded the player back to where they started walking.
+      const movedLocallyRecently = performance.now() - this.lastLocalInputAtMs < 2500;
+
+      // Only snap on initial spawn, dungeon zone change, death respawn, or a genuine major teleport (>80yd).
+      if (
+        !this.hasSyncedInitialPos ||
+        changedInstance ||
+        me.isDead ||
+        (distFromPred > hardDesyncThreshold && !movedLocallyRecently)
+      ) {
+        this.localPred.x = me.x;
+        this.localPred.z = me.y;
+        this.localPred.heightY = me.z;
+        this.hasSyncedInitialPos = true;
+      } else if (!me.isMounted && me.z === 0) {
+        this.localPred.heightY = 0;
+      }
+    }
+
+    this.world3D.syncWorldState({
+      players: this.players,
+      npcs: this.npcs,
+      groundZones: this.groundZones,
+      relicNodes: this.relicNodes,
+      myPlayerId: this.myPlayerId,
+      myTargetId: me?.targetId ?? null,
+      isHostileToMe: (ent) => this.isHostileToMe(ent),
+    });
+
+    this.spawnVfxForNewEvents(packet.recentEvents);
+    this.hud.ingestCombatEvents(packet.recentEvents);
   }
 
   private checkZoneDiscovery(): void {
@@ -1180,6 +1205,11 @@ class Glimmerfall3DClient {
     this.lastFrameTimeMs = now;
 
     try {
+      if (this.pendingWorldStateRaw !== null) {
+        const raw = this.pendingWorldStateRaw;
+        this.pendingWorldStateRaw = null;
+        this.applyWorldState(JSON.parse(raw));
+      }
       this.updateLocalMovement60Fps(dt);
       const me = this.getMyPlayer();
       this.world3D.renderFrame(me, this.isPortalOpen ? null : this.localPred);

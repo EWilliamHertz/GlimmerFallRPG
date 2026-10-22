@@ -154,7 +154,18 @@ app.get('/api/registries', (_req, res) => {
 });
 
 const server = http.createServer(app);
-const wss = new WebSocketServer({ server });
+// Entities further than this from a player are not sent to that player's client (open world only).
+const INTEREST_RADIUS_YARDS = 200;
+
+const wss = new WebSocketServer({
+  server,
+  // WORLD_STATE snapshots are repetitive JSON (~10x compressible); keeps tunnels / proxies from backlogging.
+  perMessageDeflate: {
+    threshold: 1024,
+    concurrencyLimit: 10,
+    zlibDeflateOptions: { level: 1 },
+  },
+});
 
 let nextPlayerSeq = 1;
 const socketToPlayerId = new Map<WebSocket, string>();
@@ -598,15 +609,31 @@ setInterval(() => {
       const instanceInfo =
         world.instances.get(instId) ?? world.instances.get('open_world_nexus')!;
 
+      // Interest management: in the huge open world only send what is near this player
+      // (dungeons / arenas are small, so everything in the instance is already "nearby").
+      const isOpenWorld = instId === 'open_world_nexus';
+      const near = (e: { x: number; y: number }, extra = 0) =>
+        Math.hypot(e.x - me.x, e.y - me.y) <= INTEREST_RADIUS_YARDS + extra;
+
       const statePacket: ServerPacket = {
         type: 'WORLD_STATE',
         serverTimeMs: now,
         instanceInfo,
         queueStatus: matchmaking.getPlayerQueueStatus(me, now),
-        players: allPlayers.filter((p) => p.instanceId === instId),
-        npcs: allNpcs.filter((n) => n.instanceId === instId),
-        groundZones: allZones.filter((z) => z.instanceId === instId),
-        relicNodes: allNodes.filter((r) => r.instanceId === instId),
+        players: allPlayers.filter(
+          (p) => p.instanceId === instId && (!isOpenWorld || p.id === me.id || near(p))
+        ),
+        npcs: allNpcs.filter(
+          (n) =>
+            n.instanceId === instId &&
+            (!isOpenWorld || near(n) || n.id === me.targetId || n.targetId === me.id)
+        ),
+        groundZones: allZones.filter(
+          (z) => z.instanceId === instId && (!isOpenWorld || near(z, 60))
+        ),
+        relicNodes: allNodes.filter(
+          (r) => r.instanceId === instId && (!isOpenWorld || near(r))
+        ),
         recentEvents: combat.recentEvents
           .filter((e) => e.instanceId === instId)
           .slice(-24),

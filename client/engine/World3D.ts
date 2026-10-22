@@ -256,7 +256,7 @@ export class World3D {
       const wallOffset = 18; // 18 yards wide canyon corridor
       for (const side of [-1, 1]) {
         for (let seg = 1; seg <= 5; seg++) {
-          const t = seg / 5.5;
+          const t = (seg + 0.35) / 5.5;
           const cx = p.tx * t + Math.cos(perpAngle) * wallOffset * side;
           const cz = p.tz * t + Math.sin(perpAngle) * wallOffset * side;
           const cliffHeight = 16 + (seg % 3) * 6;
@@ -302,10 +302,15 @@ export class World3D {
     });
 
     const wallSpecs = [
-      { name: 'North', x: 0, z: -33.5, w: 34, d: 5, h: 12 },
-      { name: 'South', x: 0, z: 33.5, w: 34, d: 5, h: 12 },
-      { name: 'West',  x: -33.5, z: 0, w: 5, d: 34, h: 12 },
-      { name: 'East',  x: 33.5, z: 0, w: 5, d: 34, h: 12 },
+      // North Wall: Split into West and East curtain walls flanking central Archway Gateway (x: -5 to +5 open)
+      { name: 'NorthLeft',  x: -11, z: -33.5, w: 12, d: 5, h: 12 },
+      { name: 'NorthRight', x:  11, z: -33.5, w: 12, d: 5, h: 12 },
+      // South Wall: Split into West and East curtain walls flanking central gateway (x: -5 to +5 open)
+      { name: 'SouthLeft',  x: -11, z:  33.5, w: 12, d: 5, h: 12 },
+      { name: 'SouthRight', x:  11, z:  33.5, w: 12, d: 5, h: 12 },
+      // West and East Walls
+      { name: 'West',       x: -33.5, z: 0,   w: 5, d: 34, h: 12 },
+      { name: 'East',       x:  33.5, z: 0,   w: 5, d: 34, h: 12 },
     ];
 
     for (const ws of wallSpecs) {
@@ -579,13 +584,27 @@ export class World3D {
       { gltf: crysGltf, height: 3.1 },
     ];
 
+    const isNearRoadOrSanctuary = (x: number, z: number): boolean => {
+      if (Math.hypot(x, z) < 36) return true; // Sanctuary interior
+      if (Math.abs(x) < 5.0 && z <= 0 && z >= -85) return true; // North road
+      if (Math.abs(x) < 5.0 && z >= 0 && z <= 85) return true; // South road
+      const dSolari = Math.abs(x + z) / Math.SQRT2;
+      if (dSolari < 7.0 && x > 0 && z < 0) return true;
+      const dTerra = Math.abs(x - z) / Math.SQRT2;
+      if (dTerra < 7.0 && x > 0 && z > 0) return true;
+      const dUmbri = Math.abs(x + z) / Math.SQRT2;
+      if (dUmbri < 7.0 && x < 0 && z > 0) return true;
+      const dAether = Math.abs(x - z) / Math.SQRT2;
+      if (dAether < 7.0 && x < 0 && z < 0) return true;
+      return false;
+    };
+
     for (let i = 0; i < 160; i++) {
       const angle = (i / 160) * Math.PI * 2 + (i % 5) * 0.17;
       const radius = 24 + ((i * 37) % 320);
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
-      // Keep central arena clear
-      if (Math.hypot(x, z) < 14) continue;
+      if (isNearRoadOrSanctuary(x, z)) continue;
 
       const spec = propSources[i % propSources.length];
       if (!spec.gltf) continue;
@@ -743,7 +762,7 @@ export class World3D {
       if (colGltf) {
         for (let i = 0; i < 4; i++) {
           const col = colGltf.scene.clone();
-          const ang = (i / 4) * Math.PI * 2 + Math.PI / 4;
+          const ang = (i / 2) * Math.PI;
           this.modelLoader.fitModelToHeight(col, 4.5, 0);
           col.position.set(b.x + Math.cos(ang) * 9.5, 0, b.z + Math.sin(ang) * 9.5);
           this.nexusSpireGroup.add(col);
