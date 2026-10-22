@@ -10,6 +10,7 @@
     "dev": "npm run build:client && tsx server/index.ts",
     "tunnel": "tsx scripts/tunnel.ts",
     "sync:neon": "tsx scripts/sync_from_neon.ts",
+    "test:collision": "tsx scripts/test_collision.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

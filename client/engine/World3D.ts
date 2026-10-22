@@ -282,6 +282,115 @@ export class World3D {
     northRoad.receiveShadow = true;
     this.nexusSpireGroup.add(northRoad);
 
+    // -------------------------------------------------------------
+    // Fortified Nexus Citadel Stone Ramparts & Gateway Watchtowers
+    // -------------------------------------------------------------
+    const stoneWallMat = new THREE.MeshStandardMaterial({
+      color: 0x1e2638,
+      roughness: 0.88,
+      metalness: 0.12,
+    });
+    const stoneTrimMat = new THREE.MeshStandardMaterial({
+      color: 0x334155,
+      roughness: 0.7,
+      metalness: 0.25,
+    });
+    const runeGlowMat = new THREE.MeshStandardMaterial({
+      color: 0x38bdf8,
+      emissive: 0x0284c7,
+      emissiveIntensity: 0.85,
+    });
+
+    const wallSpecs = [
+      { name: 'North', x: 0, z: -33.5, w: 34, d: 5, h: 12 },
+      { name: 'South', x: 0, z: 33.5, w: 34, d: 5, h: 12 },
+      { name: 'West',  x: -33.5, z: 0, w: 5, d: 34, h: 12 },
+      { name: 'East',  x: 33.5, z: 0, w: 5, d: 34, h: 12 },
+    ];
+
+    for (const ws of wallSpecs) {
+      // Main curtain wall body
+      const wallMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(ws.w, ws.h, ws.d),
+        stoneWallMat
+      );
+      wallMesh.position.set(ws.x, ws.h * 0.5, ws.z);
+      wallMesh.castShadow = true;
+      wallMesh.receiveShadow = true;
+      this.nexusSpireGroup.add(wallMesh);
+
+      // Upper parapet walkway trim
+      const trimMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(ws.w + 0.6, 0.8, ws.d + 0.6),
+        stoneTrimMat
+      );
+      trimMesh.position.set(ws.x, ws.h + 0.4, ws.z);
+      trimMesh.castShadow = true;
+      trimMesh.receiveShadow = true;
+      this.nexusSpireGroup.add(trimMesh);
+
+      // Glowing magical defensive rune in wall center
+      const runeEmblem = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.7, 0),
+        runeGlowMat
+      );
+      runeEmblem.position.set(ws.x, ws.h * 0.5 + 1.2, ws.z);
+      this.nexusSpireGroup.add(runeEmblem);
+      this.rotatingRings.push(runeEmblem);
+
+      // Crenellations (battlements) along the top of the wall
+      const isHorizontal = ws.w > ws.d;
+      const step = 3.6;
+      const count = Math.floor((isHorizontal ? ws.w : ws.d) / step);
+      for (let c = 0; c < count; c++) {
+        if (c % 2 === 0) continue;
+        const offset = (c - count / 2) * step + step * 0.5;
+        const bX = ws.x + (isHorizontal ? offset : 0);
+        const bZ = ws.z + (isHorizontal ? 0 : offset);
+        const crenel = new THREE.Mesh(
+          new THREE.BoxGeometry(isHorizontal ? 2.2 : ws.w + 0.3, 1.4, isHorizontal ? ws.d + 0.3 : 2.2),
+          stoneTrimMat
+        );
+        crenel.position.set(bX, ws.h + 1.1, bZ);
+        crenel.castShadow = true;
+        this.nexusSpireGroup.add(crenel);
+      }
+    }
+
+    // 8 Grand Watchtowers at the corners flanking the 4 gate passages
+    const towerPositions = [
+      { x: 19, z: -33.5 },
+      { x: 33.5, z: -19 },
+      { x: 33.5, z: 19 },
+      { x: 19, z: 33.5 },
+      { x: -19, z: 33.5 },
+      { x: -33.5, z: 19 },
+      { x: -33.5, z: -19 },
+      { x: -19, z: -33.5 },
+    ];
+
+    const towerGeo = new THREE.CylinderGeometry(2.2, 2.6, 15, 16);
+    const towerCapGeo = new THREE.ConeGeometry(2.8, 4.5, 16);
+    const towerLanternGeo = new THREE.SphereGeometry(0.65, 12, 12);
+
+    for (const tp of towerPositions) {
+      const tower = new THREE.Mesh(towerGeo, stoneWallMat);
+      tower.position.set(tp.x, 7.5, tp.z);
+      tower.castShadow = true;
+      tower.receiveShadow = true;
+      this.nexusSpireGroup.add(tower);
+
+      const cap = new THREE.Mesh(towerCapGeo, stoneTrimMat);
+      cap.position.set(tp.x, 15 + 2.25, tp.z);
+      cap.castShadow = true;
+      this.nexusSpireGroup.add(cap);
+
+      // Glowing crystal beacon atop each watchtower
+      const beacon = new THREE.Mesh(towerLanternGeo, runeGlowMat);
+      beacon.position.set(tp.x, 15 + 4.8, tp.z);
+      this.nexusSpireGroup.add(beacon);
+    }
+
     // Central Spire Crystal
     const crystalTower = new THREE.Mesh(
       new THREE.OctahedronGeometry(1.5, 0),

@@ -23,6 +23,7 @@ import {
   ZENITH_RADIANT_BURN_AURA,
   ZENITH_STATE_AURA,
 } from '../shared/factionsRegistry';
+import { collisionWorld } from '../shared/collisionEngine';
 import { TALENT_NODE_BY_ID } from '../shared/talentsRegistry';
 import { WorldManager } from './worldManager';
 import { characterStore } from './characterStore';
@@ -2200,6 +2201,9 @@ export class CombatEngine {
           npc.facingRad = angle;
           npc.x += Math.cos(angle) * 0.45;
           npc.y += Math.sin(angle) * 0.45;
+          const resolved = collisionWorld.resolvePlayerPosition(npc.x, npc.y, npc.z || 0, 1.2, npc.instanceId);
+          npc.x = resolved.x;
+          npc.y = resolved.z;
           npc.animState = 'Run';
           npc.animUpdatedAtMs = now;
           npc.hp = Math.min(npc.maxHp, npc.hp + Math.round(npc.maxHp * 0.05));
@@ -2244,6 +2248,9 @@ export class CombatEngine {
             npc.facingRad = angle;
             npc.x += Math.cos(angle) * 0.24;
             npc.y += Math.sin(angle) * 0.24;
+            const resolved = collisionWorld.resolvePlayerPosition(npc.x, npc.y, npc.z || 0, 1.2, npc.instanceId);
+            npc.x = resolved.x;
+            npc.y = resolved.z;
             npc.animState = 'Run';
           } else if (now - npc.animUpdatedAtMs > 550) {
             npc.animState = 'Idle';

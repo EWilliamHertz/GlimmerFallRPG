@@ -11,6 +11,7 @@ import { WorldManager } from './worldManager';
 import { CombatEngine } from './combatEngine';
 import { MatchmakingQueue } from './matchmakingQueue';
 import { characterStore } from './characterStore';
+import { collisionWorld } from '../shared/collisionEngine';
 
 const PORT = Number(process.env.PORT || 8080);
 const HOST = '0.0.0.0';
@@ -263,6 +264,17 @@ wss.on('connection', (ws: WebSocket) => {
               }
             }
 
+            // Authoritative server-side wall and obstacle collision resolution
+            const resolved = collisionWorld.resolvePlayerPosition(
+              player.x,
+              player.y,
+              player.z || 0,
+              0.85,
+              player.instanceId || 'open_world_nexus'
+            );
+            player.x = resolved.x;
+            player.y = resolved.z;
+
             if (len > 0) {
               player.lastMoveAtMs = timestamp;
             }
@@ -292,6 +304,15 @@ wss.on('connection', (ws: WebSocket) => {
             const ny = (packet.dy / len) * speed;
             player.x = Math.max(-750, Math.min(750, player.x + nx));
             player.y = Math.max(-750, Math.min(750, player.y + ny));
+            const resolved = collisionWorld.resolvePlayerPosition(
+              player.x,
+              player.y,
+              player.z || 0,
+              0.85,
+              player.instanceId || 'open_world_nexus'
+            );
+            player.x = resolved.x;
+            player.y = resolved.z;
             if (player.isMounted) {
               player.animState = 'Flight';
             } else if (!player.activeCast && timestamp - player.animUpdatedAtMs > 320) {

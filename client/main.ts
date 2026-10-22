@@ -12,6 +12,7 @@ import {
   ServerPacket,
 } from '../shared/types';
 import { ALL_ABILITIES } from '../shared/classesRegistry';
+import { collisionWorld } from '../shared/collisionEngine';
 import { lerpAngle, LocalPlayerPrediction, World3D } from './engine/World3D';
 import { MinimalHud } from './ui/MinimalHud';
 import { LandingPortal } from './ui/LandingPortal';
@@ -604,8 +605,17 @@ class Glimmerfall3DClient {
       if (matchesKey(cfg.dodge) && !ev.repeat) {
         const dashDirX = Math.sin(this.localPred.rotY);
         const dashDirZ = Math.cos(this.localPred.rotY);
-        this.localPred.x = Math.max(-750, Math.min(750, this.localPred.x + dashDirX * 8.5));
-        this.localPred.z = Math.max(-750, Math.min(750, this.localPred.z + dashDirZ * 8.5));
+        const dashTargetX = Math.max(-750, Math.min(750, this.localPred.x + dashDirX * 8.5));
+        const dashTargetZ = Math.max(-750, Math.min(750, this.localPred.z + dashDirZ * 8.5));
+        const resolvedDash = collisionWorld.resolvePlayerPosition(
+          dashTargetX,
+          dashTargetZ,
+          this.localPred.heightY,
+          0.85,
+          this.instanceInfo?.instanceId || 'open_world_nexus'
+        );
+        this.localPred.x = resolvedDash.x;
+        this.localPred.z = resolvedDash.z;
         this.world3D.createBurst(this.localPred.x, 1.2, this.localPred.z, 0x38bdf8, 12);
         this.sendPacket({
           type: 'JUMP_OR_DODGE',
@@ -965,6 +975,18 @@ class Glimmerfall3DClient {
         -750,
         Math.min(750, this.localPred.z + Math.cos(moveAngle) * speed * dt)
       );
+
+      // Solid Wall & Obstacle Collision with Tangential Sliding
+      const resolved = collisionWorld.resolvePlayerPosition(
+        this.localPred.x,
+        this.localPred.z,
+        this.localPred.heightY,
+        0.85,
+        this.instanceInfo?.instanceId || 'open_world_nexus'
+      );
+      this.localPred.x = resolved.x;
+      this.localPred.z = resolved.z;
+
       this.localPred.animState = isMounted ? 'Flight' : (isSprinting ? 'Sprint' : 'Run');
 
       if (me) {
@@ -1016,6 +1038,15 @@ class Glimmerfall3DClient {
           const push = Math.min(overlap, dt * 6.0);
           this.localPred.x += nx * push;
           this.localPred.z += nz * push;
+          const resolvedPush = collisionWorld.resolvePlayerPosition(
+            this.localPred.x,
+            this.localPred.z,
+            this.localPred.heightY,
+            0.85,
+            this.instanceInfo?.instanceId || 'open_world_nexus'
+          );
+          this.localPred.x = resolvedPush.x;
+          this.localPred.z = resolvedPush.z;
           if (me) {
             me.x = this.localPred.x;
             me.y = this.localPred.z;

@@ -671,9 +671,9 @@
   },
   "guest_chronosavant_870": {
     "name": "Guest_Chronosavant_870",
-    "classId": "CRAGWARDEN_JUGGERNAUT",
+    "classId": "HEXBINDER_WARLOCK",
     "level": 6,
-    "currentXp": 1400,
+    "currentXp": 2115,
     "maxXp": 2250,
     "attributePointsAvailable": 15,
     "allocatedAttributes": {
@@ -698,20 +698,20 @@
     "talents": {},
     "talentPointsAvailable": 60,
     "equippedRelicDeck": [
-      "card_terra_bramble_armor",
-      "card_terra_grove_sanctuary",
-      "card_terra_heart_of_the_forest"
+      "card_solari_heavens_gate",
+      "card_umbri_altar_of_sacrifice",
+      "card_umbri_void_prism"
     ],
     "actionBars": [
-      "jug_tectonic_slam",
-      "jug_thornbark_carapace",
-      "jug_seismic_upheaval",
-      "jug_grasping_roots",
-      "jug_boulder_toss",
-      "jug_earthshaker_roar",
-      "jug_living_monolith",
-      "jug_verdant_regrowth",
-      "jug_worldbreaker_crater",
+      "wlk_umbral_bolt",
+      "wlk_curse_of_withered_blood",
+      "wlk_soul_harvest",
+      "wlk_unstable_hex",
+      "wlk_plague_contagion",
+      "wlk_demonic_pact",
+      "wlk_dread_howl",
+      "wlk_shadow_rift_portal",
+      "wlk_avatar_of_the_abyss",
       null,
       null,
       null,
@@ -729,23 +729,23 @@
       null
     ],
     "tacticalLoadout": [
-      "jug_tectonic_slam",
-      "jug_thornbark_carapace",
-      "jug_seismic_upheaval",
-      "jug_grasping_roots",
-      "jug_boulder_toss",
-      "jug_worldbreaker_crater"
+      "wlk_umbral_bolt",
+      "wlk_curse_of_withered_blood",
+      "wlk_soul_harvest",
+      "wlk_unstable_hex",
+      "wlk_plague_contagion",
+      "wlk_avatar_of_the_abyss"
     ],
-    "x": 37.33752975831706,
-    "y": 38.701409471772166,
+    "x": 58.751085821659615,
+    "y": 44.70051954433812,
     "z": 0,
-    "facingRad": -2.3307963267948963,
+    "facingRad": -0.9950963267948966,
     "savedOpenWorldPos": {
       "x": 253.55402436406382,
       "y": -98.76681013639049,
       "z": 0
     },
-    "lastSavedAt": 1792512637178
+    "lastSavedAt": 1792673345450
   },
   "sunspirevanguard": {
     "name": "SunspireVanguard",
